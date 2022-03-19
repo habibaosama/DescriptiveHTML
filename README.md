@@ -9,7 +9,9 @@ the grammer of the language:
 *img → "IMAGE" "WITH" "SOURCE" quote sentence quote
 *header → "HEADING" decorated_text
 *para → "PARAGRAPH" decorated_text
+
 *url → "LINK" decorated_url
+
 *decorated_text → decorated_text "AND" decorated_text | text | color | font
 *text → "WITH" "TEXT" quote sentence quote
 *color → "WITH" "COLOR" quote sentence quote
