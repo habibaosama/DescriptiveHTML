@@ -1,0 +1,307 @@
+PARSER_BEGIN(Hello)
+package team;
+
+
+
+import java.io.StringReader;
+
+
+
+public class Hello {
+
+public static void main(String[] args) throws Exception {
+//StringReader in=new StringReader();
+Hello hello=new Hello(System.in);
+Hello.words();
+
+}
+
+}
+
+
+
+PARSER_END(Hello)
+
+
+
+
+<* >
+SKIP: { " " |"\t" |"\n" |"\r" }
+TOKEN: {<create:("ADD")|("EXIT")>}
+TOKEN: {<#alphanumeric: (["a"-"z"])+ |(["A"-"Z"])+| (["0"-"9"])+ | "/" | ":"|" "|"&"|"!" | "." |"_" >}
+TOKEN: {<TEXT:"WITH TEXT " < quotation>> }
+TOKEN: { < decoratedText: < color>|< font> >}
+TOKEN: {<#color:"WITH COLOR " < quotation>> }
+TOKEN: {<#font:"WITH FONT " < quotation> >}
+TOKEN: {<link:"WITH LINK " < quotation> >}
+TOKEN: {<quote :"\"">}
+TOKEN: {<and:"AND">}
+TOKEN: { <NULL : "null" >}
+TOKEN: { <#sentence:<alphanumeric> (<alphanumeric>)* >}
+TOKEN: { <ELEMENT : "IMAGE" | "HEADING"| "PARAGRAPH" | "LINK" >}
+TOKEN: {<quotation: <quote > <sentence > <quote> > }
+TOKEN: {<IMAGE : "WITH SOURCE " <quotation> > }
+
+
+
+
+
+String words():
+{
+Token start,element ;
+String language="";
+
+}
+{
+(
+start=<create> { }
+{
+if(start.image.equals("EXIT")) {
+  return language;
+}  
+if(!(start.image.equals("ADD"))) { 
+    break;
+}
+}
+
+
+
+element=<ELEMENT> {} {
+
+if(element.image.equals("IMAGE")) {
+String image = img();
+System.out.println(image);
+language= language +image+"\n";
+}
+else if(element.image.equals("PARAGRAPH")) {
+
+String para=paragraph();
+System.out.println(para);
+language= language +para+"\n";
+
+}
+else if(element.image.equals("LINK")) {
+
+String lin=linkk();
+System.out.println(lin);
+language= language +lin+"\n";
+
+
+}
+
+
+else if(element.image.equals("HEADING")) {
+
+String head=heading();
+System.out.println(head);
+language= language +head+"\n";
+
+}
+
+
+
+else {
+
+  break;
+  }
+
+}
+
+)*
+<EOF>
+{
+  
+ return language;
+}
+}
+
+
+
+String img() :
+{
+Token tok;
+String parsedHTML = "";
+}
+{
+tok = < IMAGE > {}
+{
+String[] s = tok.image.split(" ",3);
+int len = s[2].length();
+parsedHTML = parsedHTML + "<img src=" + s[2].substring(0,len) + "/>";
+}
+{return parsedHTML;}
+}
+
+
+
+
+
+
+String paragraph() :
+{
+
+Token tok, a;
+String text="";
+String color="";
+String font="";
+String parsedHTML="<p";
+}
+{
+tok = <TEXT> {}
+{
+
+String[] s = tok.image.split(" ",3);
+int len = s[2].length();
+text= text + ">" + s[2].substring(1,len-1)+"</p>";//Remove the quotations.
+}
+(
+a = <and>{}
+{}
+tok = <decoratedText>{}
+{
+String[] st = tok.image.split(" ", 3);
+int l = st[2].length();
+if(st[1].equals("COLOR")){
+color = st[2].substring(1,l-1);
+}
+if(st[1].equals("FONT")){
+font = st[2].substring(1,l-1) ;
+}
+}
+)*
+
+{
+if(color.length() >0 || font.length() >0) {
+ parsedHTML = parsedHTML +  " style=\"";   
+if(color.length() >0){
+parsedHTML = parsedHTML + "color:" + color + ";";
+}
+if(font.length() >0){
+parsedHTML = parsedHTML + "font-family:" + font + ";";
+}
+parsedHTML = parsedHTML + "\"";
+}
+parsedHTML = parsedHTML + text;
+}
+{return parsedHTML;}
+
+}
+
+
+
+
+
+
+
+String heading(): {
+
+Token tok, a;
+String text="";
+String color="";
+String font="";
+String parsedHTML="<h1";
+}
+{
+tok = <TEXT> {}
+{
+
+String[] s = tok.image.split(" ",3);
+int len = s[2].length();
+text= text + ">" + s[2].substring(1,len-1)+"</h1>";//Remove the quotations.
+}
+(
+a = <and>{}
+{}
+tok = <decoratedText>{}
+{
+String[] st = tok.image.split(" ", 3);
+
+int l = st[2].length();
+if(st[1].equals("COLOR")){
+color = st[2].substring(1,l-1);
+}
+if(st[1].equals("FONT")){
+font = st[2].substring(1,l-1) ;
+}
+}
+)*
+
+{
+if(color.length() >0 || font.length() >0) {
+ parsedHTML = parsedHTML +  " style=\"";   
+if(color.length() >0){
+parsedHTML = parsedHTML + "color:" + color + ";";
+}
+if(font.length() >0){
+parsedHTML = parsedHTML + "font-family:" + font + ";";
+}
+parsedHTML = parsedHTML + "\"";
+}
+parsedHTML = parsedHTML + text;
+}
+{return parsedHTML;}
+
+}
+
+String linkk(): {
+
+Token tok, a;
+String text="";
+String url="";
+String color="";
+String font="";
+String parsedHTML="<a";
+}
+{
+tok = <TEXT> {}
+{
+
+String[] s = tok.image.split(" ",3);
+int len = s[2].length();
+text= text + ">" + s[2].substring(1,len-1)+"</a>";//Remove the quotations.
+}
+(
+a = <and>{}
+{}
+(
+  
+tok = <decoratedText>{}
+{
+String[] st = tok.image.split(" ", 3);
+
+int l = st[2].length();
+if(st[1].equals("COLOR")){
+color = st[2].substring(1,l-1);
+}
+if(st[1].equals("FONT")){
+font = st[2].substring(1,l-1) ;
+}
+}
+)*
+(
+tok = < link >
+{
+String[] str = tok.image.split(" ", 3);
+int length = str[2].length();
+url=url+ str[2].substring(0,length);
+}
+)*
+)*
+
+{
+parsedHTML=parsedHTML+" href="+url;  
+if(color.length() >0 || font.length() >0) {
+ parsedHTML = parsedHTML + " style=\"";   
+if(color.length() >0){
+parsedHTML = parsedHTML + "color:" + color + ";";
+}
+if(font.length() >0){
+parsedHTML = parsedHTML + "font-family:" + font + ";";
+}
+parsedHTML = parsedHTML + "\"";
+}
+parsedHTML = parsedHTML + text;
+}
+{return parsedHTML;}
+
+}
